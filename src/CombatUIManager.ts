@@ -285,7 +285,7 @@ export class CombatUIManager {
             renderPip(pip);
 
             // Add divider if transitioning from gold to non-gold
-            if (pip.isGold && !isCompact && i < pipsToRender.length - 1 && !pipsToRender[i + 1].isGold) {
+            if (pip.isGold && i < pipsToRender.length - 1 && !pipsToRender[i + 1].isGold) {
                 const divider = document.createElement("span");
                 divider.className = "divider";
                 divider.textContent = "|";
