@@ -4,6 +4,8 @@ import { join } from "node:path";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
+const { findCombatantByMessage } = await import("../src/foundryCompat.ts");
+
 globalThis.ui = {
     windows: {},
     notifications: { warn: () => {}, error: () => {} },
@@ -79,7 +81,7 @@ const message = {
     whisper: [],
 };
 
-assert.equal(ChatManager.getCombatantFromMsg(message), tokenCombatant);
+assert.equal(findCombatantByMessage(game.combat, message), tokenCombatant);
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const mainSource = readFileSync(join(__dirname, "../src/main.ts"), "utf8");
