@@ -6,7 +6,7 @@ import { ActorHandler } from "./ActorHandler.ts";
 import { logConsole } from "./logger.ts"
 import * as Detectors from "./chatTypeDetectors/index.ts";
 import type { IActionDetails } from "./chatTypeDetectors/IActionDetector.ts";
-import { getCombatants, getOpenApplications, isCurrentUserActiveGM, renderHandlebarsTemplate } from "./foundryCompat.ts";
+import { findCombatantByMessage, findCombatantById, findCombatantByTokenOrActor, getOpenApplications, isCurrentUserActiveGM, renderHandlebarsTemplate } from "./foundryCompat.ts";
 
 // Use a Template Literal Type for clarity, or just string
 type CombatantId = string;
@@ -30,7 +30,7 @@ export class ChatManager {
                 if (!originMsgId) return;
 
                 const message = game.messages.get(originMsgId);
-                const combatant = this.getCombatantFromMsg(message);
+                const combatant = findCombatantByMessage((game as any).combat, message);
                 if (!combatant) return;
 
                 const c = combatant as any;
@@ -58,23 +58,12 @@ export class ChatManager {
         app.options.originatingMessageId = originMsgId;
     }
 
-    public static getCombatantFromMsg(message: any): CombatantPF2e | undefined {
-        const actor = message.actor;
-        const combat = (game as any).combat;
-        if (!actor || !combat?.active) return;
-        const speaker = message.speaker;
-        const combatant = getCombatants(combat).find((c: any) =>
-            speaker.token ? c.tokenId === speaker.token : c.actorId === actor.id
-        );
-
-        return combatant;
-    }
 
     public static async maybeGetOriginMsgId(message: any) {
         const isDamageRoll = message.flags?.pf2e?.context?.type === "damage-roll";
         if (!isDamageRoll) return;
 
-        const combatant = this.getCombatantFromMsg(message);
+        const combatant = findCombatantByMessage((game as any).combat, message);
         if (!combatant) return;
 
         let originatingMsgId: string | undefined;
@@ -127,7 +116,7 @@ export class ChatManager {
      * This will ensure that if the message is modified, we edit the proper log entry, otherwise we create a new one
      */
     static async handleChatPayload(message: any) {
-        const combatant = this.getCombatantFromMsg(message);
+        const combatant = findCombatantByMessage((game as any).combat, message);
         const c = combatant as any;
 
         if (!combatant) return;
@@ -238,13 +227,13 @@ export class ChatManager {
             event.preventDefault();
             const button = event.currentTarget;
             const { action, actorId, itemId, itemName, combatantId } = button.dataset;
- 
+
             const actor = (game.actors as any).get(actorId ?? "");
             if (!actor || (!actor.isOwner && !game.user.isGM)) return;
- 
+
             // Resolve the combatant directly by ID (Identity Crisis Solved)
-            const combatant = getCombatants(game.combat).find((c: any) => c.id === combatantId);
- 
+            const combatant = findCombatantById(game.combat, combatantId);
+
             const choice = action === "sustain-yes" ? "yes" : "no";
             const payload = {
                 messageId: message.id,
@@ -254,7 +243,7 @@ export class ChatManager {
                 itemName: itemName || "",
                 choice: choice
             };
- 
+
             if (game.user.isGM) {
                 if (choice === "yes") {
                     await this.processSustainYes(actor, itemId || "", itemName || "", combatantId);
@@ -373,7 +362,7 @@ export class ChatManager {
     static async processSustainYes(actor: any, itemId: string, itemName: string, combatantId?: string) {
         const item = actor.items.get(itemId);
         const displayName = itemName || item?.name || "Action";
-        const combatant = getCombatants(game.combat).find((c: any) => c.id === combatantId);
+        const combatant = findCombatantById(game.combat, combatantId);
         const token = (combatant as any)?.token;
 
         await ChatMessage.create({
@@ -415,7 +404,7 @@ export class ChatManager {
     static async processSustainNo(actor: any, itemId: string, combatant?: any) {
         // 1. Precise Cleanup of flags
         // If we don't have a combatant passed in, try to find one (fallback)
-        const targetCombatant = combatant || getCombatants(game.combat).find(c => (c as any).actorId === actor.id);
+        const targetCombatant = combatant || findCombatantByTokenOrActor(game.combat, null, actor.id);
 
         if (targetCombatant) {
             const { ActionManager } = await import("./ActionManager.ts");

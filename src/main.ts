@@ -11,31 +11,12 @@ import { logConsole, logError, logInfo, logWarn } from "./logger";
 import { SCOPE, recentIntent } from "./globals";
 import { runAllConflictChecks } from "./otherModConflicts";
 import { findPf2eHudTracker } from "./trackerAdapters";
-import { getCombatants, isCurrentUserActiveGM, loadHandlebarsTemplates } from "./foundryCompat";
+import { findCombatantByMessage, findCombatantByTokenOrActor, findCombatantById, getCombatants, isCurrentUserActiveGM, loadHandlebarsTemplates, findCombatant } from "./foundryCompat";
 
 // string is the combatant ID.
 const _queues = new Map<string, Promise<void>>();
 let pf2eHudObserver: MutationObserver | undefined;
 let isReady = false;
-
-function findCombatant(combat: any, predicate: (combatant: any) => boolean): CombatantPF2e | undefined {
-    return getCombatants(combat).find(predicate) as CombatantPF2e | undefined;
-}
-
-function findCombatantById(combat: any, combatantId?: string): CombatantPF2e | undefined {
-    if (!combatantId) return;
-    return findCombatant(combat, (c: any) => c.id === combatantId);
-}
-
-function findCombatantByTokenOrActor(combat: any, tokenId?: string, actorId?: string): CombatantPF2e | undefined {
-    if (!tokenId && !actorId) return;
-    return findCombatant(combat, (c: any) => tokenId ? c.tokenId === tokenId : c.actorId === actorId);
-}
-
-function findCombatantByMessage(combat: any, message: ChatMessagePF2e): CombatantPF2e | undefined {
-    const speaker = message.speaker;
-    return findCombatantByTokenOrActor(combat, speaker?.token, speaker?.actor);
-}
 
 function syncPf2eHudTracker(combat: any): boolean {
     if (!SettingsManager.get("showPf2eHudTracker")) return true;
@@ -113,7 +94,7 @@ Hooks.on("createChatMessage", async (message: ChatMessagePF2e) => {
     if (!isReady) return;
     if (!isCurrentUserActiveGM()) return;
 
-    const combatant = ChatManager.getCombatantFromMsg(message);
+    const combatant = findCombatantByMessage(game.combat, message);
     const c = combatant as unknown as Combatant
     if (!c?.id) return;
 

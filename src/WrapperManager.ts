@@ -1,6 +1,7 @@
 import { ChatManager } from "./ChatManager";
 import { logConsole } from "./logger";
 import { recentIntent } from "./globals";
+import { findCombatantByMessage } from "./foundryCompat";
 
 declare const libWrapper: any;
 
@@ -17,11 +18,7 @@ export class WrapperManager {
         libWrapper.register("pf2e-auto-action-tracker", "game.pf2e.Check.rerollFromMessage", function (this: any, wrapped: Function, ...args: any[]) {
             const message = args[0];
             if (message?.id) {
-                const speaker = message.speaker;
-                const combatant: any = game.combat?.combatants.find((c: any) =>
-                    speaker.token ? c.tokenId === speaker.token : c.actorId === speaker.actor
-                );
-
+                const combatant = findCombatantByMessage(game.combat, message);
                 if (combatant?.id) {
                     ChatManager.broadcastReroll(combatant.id, message.id);
                 }

@@ -41,3 +41,34 @@ export function renderHandlebarsTemplate(path: string, data: Record<string, unkn
     if (typeof appHandlebars?.renderTemplate === "function") return appHandlebars.renderTemplate(path, data);
     return (globalThis as any).renderTemplate(path, data);
 }
+
+/**
+ * Safely find a combatant in a combat collection using a predicate.
+ */
+export function findCombatant(combat: any, predicate: (combatant: any) => boolean): any | undefined {
+    return getCombatants(combat).find(predicate);
+}
+
+/**
+ * Find a combatant by their ID.
+ */
+export function findCombatantById(combat: any, combatantId?: string): any | undefined {
+    if (!combatantId) return;
+    return findCombatant(combat, (c: any) => c.id === combatantId);
+}
+
+/**
+ * Find a combatant by token ID or actor ID.
+ */
+export function findCombatantByTokenOrActor(combat: any, tokenId?: string | null, actorId?: string | null): any | undefined {
+    if (!tokenId && !actorId) return;
+    return findCombatant(combat, (c: any) => tokenId ? (c.tokenId === tokenId || c.token?.id === tokenId) : (c.actorId === actorId || c.actor?.id === actorId));
+}
+
+/**
+ * Find a combatant associated with a chat message.
+ */
+export function findCombatantByMessage(combat: any, message: any): any | undefined {
+    const speaker = message.speaker;
+    return findCombatantByTokenOrActor(combat, speaker?.token ?? undefined, speaker?.actor ?? undefined);
+}
