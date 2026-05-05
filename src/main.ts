@@ -16,6 +16,7 @@ import { findCombatantByMessage, findCombatantByTokenOrActor, findCombatantById,
 // string is the combatant ID.
 const _queues = new Map<string, Promise<void>>();
 let pf2eHudObserver: MutationObserver | undefined;
+let pf2eHudObservedCombatId: string | undefined;
 let isReady = false;
 
 function syncPf2eHudTracker(combat: any): boolean {
@@ -42,6 +43,7 @@ function observePf2eHudTracker(combat: any): boolean {
         }
     });
     pf2eHudObserver.observe(hudTracker, { childList: true, subtree: true });
+    pf2eHudObservedCombatId = combat.id;
     return true;
 }
 
@@ -72,20 +74,13 @@ Hooks.on("closeDamageModifierDialog", async (app: any) => {
         delete (app.actor as any)._lastDamageOriginId;
     }
 
-    // 2. If the dialog closed because they rolled, the message creation 
-    // logic already handled the queue/flags.
-    if (app.element?.[0]?._wasRolled) return;
-
-    // 3. Find the combatant
+    // 2. Safety cleanup is a write operation, enqueue it
     const tokenId = app.token?.id;
     const actorId = app.actor?.id;
-
     const combatant = findCombatantByTokenOrActor(game.combat, tokenId, actorId);
-
     const c = combatant as any;
     if (!c?.id || !combatant) return;
 
-    // 4. Safety cleanup is a write operation, enqueue it
     enqueueAction(c.id, async () => await ChatManager.handleDamageModifierDialogRender(combatant, app));
 });
 
@@ -125,6 +120,16 @@ Hooks.on("deleteChatMessage", async (message: ChatMessagePF2e) => {
 // End of Combat hook
 Hooks.on("deleteCombat", async (combat: EncounterPF2e) => {
     const g = game as unknown as Game;
+
+    // Per-client cleanup runs on every client (not just the GM): the MutationObserver holds a
+    // closure reference to the ended combat and would otherwise keep observing the HUD tracker
+    // DOM until the next renderCombatTracker fires. Match the observed combat id so we don't
+    // tear down a newer observer that has already moved on.
+    if (pf2eHudObserver && pf2eHudObservedCombatId === combat.id) {
+        pf2eHudObserver.disconnect();
+        pf2eHudObserver = undefined;
+        pf2eHudObservedCombatId = undefined;
+    }
 
     if (!isCurrentUserActiveGM()) return;
 
