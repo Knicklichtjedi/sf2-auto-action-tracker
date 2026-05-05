@@ -5,6 +5,7 @@ import { ActorHandler } from "./ActorHandler.ts";
 import { ComplexActionEngine } from "./complexActions/ComplexActionEngine.ts";
 import { logError, logInfo, logWarn } from "./logger.ts"
 import { GlobalConfig } from "./globals.ts";
+import { isCurrentUserActiveGM } from "./foundryCompat.ts";
 
 const MOVEMENT_FLAG = "movementHistorySnapshot";
 
@@ -173,7 +174,7 @@ export class MovementManager {
 
         // If this is a player client, they must delegate the actual processing to the GM
         // because only the GM can reliably update the combatant's flags.
-        if (!(game as any).user.isActiveGM) {
+        if (!isCurrentUserActiveGM()) {
             const payload = {
                 combatantId: c.id,
                 tokenId: tokenDoc.id,

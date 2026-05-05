@@ -6,6 +6,7 @@ import type { ActorPF2e, CombatantPF2e } from "module-helpers";
 import { ComplexActionEngine } from "./complexActions/ComplexActionEngine.ts";
 import type { ActiveActivityState, ActionModifier } from "./complexActions/types.d.ts";
 import { getCurrentMapStateFromLog } from "./mapTracker.ts";
+import { isCurrentUserActiveGM } from "./foundryCompat.ts";
 
 export interface ActionLogEntry {
     cost: number;
@@ -157,7 +158,7 @@ export class ActionManager {
     static async addAction(combatant: CombatantPF2e, action: ActionLogEntry) {
         const c = combatant as any;
 
-        if (!(game as any).user.isActiveGM) {
+        if (!isCurrentUserActiveGM()) {
             const { SocketsManager } = await import("./SocketManager.ts");
             return await SocketsManager.socket.executeAsGM("addAction", {
                 combatantId: (combatant as any as Combatant).id,
@@ -266,7 +267,7 @@ export class ActionManager {
     static async editAction(combatant: CombatantPF2e, msgId: string, updates: Partial<ActionLogEntry>) {
         const c = combatant as any;
 
-        if (!(game as any).user.isActiveGM) {
+        if (!isCurrentUserActiveGM()) {
             const { SocketsManager } = await import("./SocketManager.ts");
             return await SocketsManager.socket.executeAsGM("editAction", {
                 combatantId: (combatant as any as Combatant).id,
@@ -385,7 +386,7 @@ export class ActionManager {
         if (tokenId) MovementManager.broadcastReset(tokenId);
 
         // If this is a player, we must delegate the authoritative removal to the GM
-        if (!(game as any).user.isActiveGM) {
+        if (!isCurrentUserActiveGM()) {
             const { SocketsManager } = await import("./SocketManager.ts");
             return await SocketsManager.socket.executeAsGM("removeAction", {
                 combatantId: (combatant as any as Combatant).id,
@@ -425,7 +426,7 @@ export class ActionManager {
     }
 
     static async completeComplexAction(combatant: CombatantPF2e, action: ActionLogEntry) {
-        if (!(game as any).user.isActiveGM) {
+        if (!isCurrentUserActiveGM()) {
             const { SocketsManager } = await import("./SocketManager.ts");
             return await SocketsManager.socket.executeAsGM("completeComplexAction", {
                 combatantId: (combatant as any as Combatant).id,
@@ -504,7 +505,7 @@ export class ActionManager {
         removeSustainId?: string,
         extraFlags?: Record<string, any>
     ) {
-        if (!(game as any).user.isActiveGM) return;
+        if (!isCurrentUserActiveGM()) return;
 
         const c = combatant as any;
         const actionsSpent = newLogs.filter(e => e.type !== 'reaction').reduce((sum, e) => sum + (e.cost || 0), 0);
@@ -661,7 +662,7 @@ export class ActionManager {
     private static async checkOverspend(combatant: CombatantPF2e, newLogs: ActionLogEntry[]): Promise<{ lastOverspendAlert: number } | null> {
         const c = combatant as any;
         const actor = c.actor as ActorPF2e | null;
-        if (!actor || !SettingsManager.get("whisperOverspend") || (game.user?.id !== game.users?.activeGM?.id)) return null;
+        if (!actor || !SettingsManager.get("whisperOverspend") || !isCurrentUserActiveGM()) return null;
 
         const { overspent } = ActorHandler.allocateSlots(combatant, newLogs, 'action');
 
@@ -686,7 +687,7 @@ export class ActionManager {
     private static async checkReactionOverspend(combatant: CombatantPF2e, newLogs: ActionLogEntry[]) {
         const c = combatant as any;
         const actor = c.actor as ActorPF2e | null;
-        if (!actor || !SettingsManager.get("whisperReactionOverspend") || game.user?.id !== game.users?.activeGM?.id) return;
+        if (!actor || !SettingsManager.get("whisperReactionOverspend") || !isCurrentUserActiveGM()) return;
 
         const { overspent } = ActorHandler.allocateSlots(combatant, newLogs, 'reaction');
 

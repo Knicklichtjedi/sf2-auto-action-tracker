@@ -6,6 +6,7 @@ import { ActorHandler } from "./ActorHandler.ts";
 import { logConsole } from "./logger.ts"
 import * as Detectors from "./chatTypeDetectors/index.ts";
 import type { IActionDetails } from "./chatTypeDetectors/IActionDetector.ts";
+import { getCombatants, getOpenApplications, isCurrentUserActiveGM, renderHandlebarsTemplate } from "./foundryCompat.ts";
 
 // Use a Template Literal Type for clarity, or just string
 type CombatantId = string;
@@ -78,7 +79,7 @@ export class ChatManager {
         let originatingMsgId: string | undefined;
 
         // A. Check if there's an active Dialog for this actor
-        const activeDialog = Object.values(ui.windows).find(
+        const activeDialog = getOpenApplications().find(
             (w: any) => w.constructor.name === "DamageModifierDialog" && w.actor?.id === (combatant as any).actorId
         ) as any;
 
@@ -103,7 +104,7 @@ export class ChatManager {
         if (!originatingMsgId) {
             // A. Check if there's an active Dialog for this actor
             // We look for the dialog that is currently being "submitted"
-            const activeDialog = Object.values(ui.windows).find((w: any) =>
+            const activeDialog = getOpenApplications().find((w: any) =>
                 w.constructor.name === "DamageModifierDialog" &&
                 w.actor?.id === (combatant as any).actorId &&
                 w.options?.originatingMessageId // Ensure it has our custom flag
@@ -284,7 +285,7 @@ export class ChatManager {
 
         if (Object.keys(sustainData).length > 0) {
             for (const [itemId, itemName] of Object.entries(sustainData)) {
-                const content = await renderTemplate(`modules/${SCOPE}/templates/sustain-reminder.hbs`, {
+                const content = await renderHandlebarsTemplate(`modules/${SCOPE}/templates/sustain-reminder.hbs`, {
                     combatantId: c.id,
                     actorId: actor.id,
                     itemId: itemId,
@@ -339,7 +340,7 @@ export class ChatManager {
      */
     static async broadcastReroll(combatantId: string, msgId: string) {
         this.addToRerollQueue(combatantId, msgId);
-        if (!(game as any).user.isActiveGM) {
+        if (!isCurrentUserActiveGM()) {
             const { SocketsManager } = await import("./SocketManager.ts");
             SocketsManager.socket.executeAsGM("queueReroll", { combatantId, msgId });
         }
@@ -413,7 +414,7 @@ export class ChatManager {
     static async processSustainNo(actor: any, itemId: string, combatant?: any) {
         // 1. Precise Cleanup of flags
         // If we don't have a combatant passed in, try to find one (fallback)
-        const targetCombatant = combatant || game.combat?.combatants.contents.find(c => (c as any).actorId === actor.id);
+        const targetCombatant = combatant || getCombatants(game.combat).find(c => (c as any).actorId === actor.id);
 
         if (targetCombatant) {
             const { ActionManager } = await import("./ActionManager.ts");

@@ -2,12 +2,8 @@
   "id": "pf2e-auto-action-tracker",
   "title": "PF2E Automated Action Tracker",
   "socket": true,
-  "esmodules": [
-    "main.js"
-  ],
-  "styles": [
-    "style.css"
-  ],
+  "esmodules": ["main.js"],
+  "styles": ["style.css"],
   "scripts": [],
   "description": "Automates tracking of the action economy for Pathfinder 2e.",
   "manifest": "https://github.com/soch0601/pf2e-auto-action-tracker/releases/latest/download/module.json",
@@ -21,8 +17,8 @@
   ],
   "compatibility": {
     "minimum": "13",
-    "verified": "13",
-    "maximum": "13"
+    "verified": "14.360",
+    "maximum": "14"
   },
   "relationships": {
     "requires": [
@@ -40,7 +36,8 @@
         "id": "pf2e",
         "manifest": "https://github.com/foundryvtt/pf2e/releases/latest/download/system.json",
         "compatibility": {
-          "minimum": "6.0.0"
+          "minimum": "6.0.0",
+          "verified": "8.1.1"
         }
       }
     ]

@@ -11,6 +11,7 @@ import { logConsole, logError, logInfo, logWarn } from "./logger";
 import { SCOPE, recentIntent } from "./globals";
 import { runAllConflictChecks } from "./otherModConflicts";
 import { findPf2eHudTracker } from "./trackerAdapters";
+import { isCurrentUserActiveGM, loadHandlebarsTemplates } from "./foundryCompat";
 
 // string is the combatant ID.
 const _queues = new Map<string, Promise<void>>();
@@ -47,7 +48,7 @@ function observePf2eHudTracker(combat: any): boolean {
 // Initialization
 Hooks.once("init", () => {
     SettingsManager.registerSettings();
-    (foundry.applications as any).handlebars.loadTemplates([
+    loadHandlebarsTemplates([
         `modules/${SCOPE}/templates/sustain-reminder.hbs`
     ]);
     ChatManager.registerOverrideListeners();
@@ -93,7 +94,7 @@ Hooks.on("closeDamageModifierDialog", async (app: any) => {
 // Create Chat Hook
 Hooks.on("createChatMessage", async (message: ChatMessagePF2e) => {
     if (!isReady) return;
-    if (game.user?.id !== game.users?.activeGM?.id) return;
+    if (!isCurrentUserActiveGM()) return;
 
     const combatant = ChatManager.getCombatantFromMsg(message);
     const c = combatant as unknown as Combatant
@@ -119,7 +120,7 @@ Hooks.on("deleteChatMessage", async (message: ChatMessagePF2e) => {
     const context = message.flags?.pf2e;
     if (context && "isReroll" in context && context.isReroll) return;
 
-    if (game.user?.id !== game.users?.activeGM?.id) return;
+    if (!isCurrentUserActiveGM()) return;
 
     // Enqueue deleting the action
     enqueueAction(c.id, async () => await ChatManager.handleDeletedMessage(combatant, message.id!));
@@ -129,7 +130,7 @@ Hooks.on("deleteChatMessage", async (message: ChatMessagePF2e) => {
 Hooks.on("deleteCombat", async (combat: EncounterPF2e) => {
     const g = game as unknown as Game;
 
-    if (game.user?.id !== game.users?.activeGM?.id) return;
+    if (!isCurrentUserActiveGM()) return;
 
     for (const combatant of (combat.combatants as any)) {
         const actor = combatant.actor;
@@ -222,7 +223,7 @@ Hooks.on("updateChatMessage", (message: ChatMessagePF2e, updateData: any) => {
     if (!c?.id) return;
 
     if (updateData.flags?.pf2e || updateData.whisper) {
-        if (game.user?.id === game.users?.activeGM?.id) {
+        if (isCurrentUserActiveGM()) {
             enqueueAction(c.id, async () => await ChatManager.handleChatPayload(message));
         }
     }
@@ -248,7 +249,7 @@ Hooks.on("updateCombat", async (combat: EncounterPF2e, updateData: any, options:
     if (!isReady) return;
     const g = game as unknown as Game;
 
-    if (game.user?.id !== game.users?.activeGM?.id) return;
+    if (!isCurrentUserActiveGM()) return;
 
     const isTurnChange = "turn" in updateData || "round" in updateData;
     if (!isTurnChange || !combat.started) return;
@@ -288,7 +289,7 @@ Hooks.on("updateToken", (tokenDoc: any, update: any, options: any, userId: strin
 
 // Condition Hooks for dynamic Reaction Loss
 Hooks.on("createItem", async (item: any) => {
-    if (game.user?.id !== game.users?.activeGM?.id) return;
+    if (!isCurrentUserActiveGM()) return;
     if (item.type !== "condition" && item.type !== "effect") return;
 
     if (item.slug === "stunned" || item.slug === "paralyzed") {
@@ -304,7 +305,7 @@ Hooks.on("createItem", async (item: any) => {
 });
 
 Hooks.on("updateItem", async (item: any, updateData: any) => {
-    if (game.user?.id !== game.users?.activeGM?.id) return;
+    if (!isCurrentUserActiveGM()) return;
     if (item.type !== "condition" && item.type !== "effect") return;
 
     if (item.slug === "stunned" || item.slug === "paralyzed") {
@@ -322,7 +323,7 @@ Hooks.on("updateItem", async (item: any, updateData: any) => {
 });
 
 Hooks.on("deleteItem", async (item: any) => {
-    if (game.user?.id !== game.users?.activeGM?.id) return;
+    if (!isCurrentUserActiveGM()) return;
     if (item.type !== "condition" && item.type !== "effect") return;
 
     if (item.slug === "stunned" || item.slug === "paralyzed") {

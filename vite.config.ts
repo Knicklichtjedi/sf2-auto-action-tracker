@@ -16,6 +16,12 @@ export default defineConfig({
         // We remove the assetFileNames logic because 'public' handles the CSS now
         rollupOptions: {
             external: [],
+            onwarn(warning, defaultHandler) {
+                if (warning.message.includes("is dynamically imported by") && warning.message.includes("but also statically imported by")) {
+                    return;
+                }
+                defaultHandler(warning);
+            },
         },
     },
     plugins: [
