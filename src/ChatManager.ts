@@ -1,11 +1,11 @@
-import type { ActionLogEntry, linkedRolls } from "./ActionManager.ts";
+import type { ActionLogEntry } from "./ActionLogTypes.ts";
 import { SCOPE } from "./globals.ts";
 import type { ActorPF2e, ChatMessagePF2e, CombatantPF2e } from "module-helpers";
 import { SettingsManager } from "./SettingsManager.ts";
 import { ActorHandler } from "./ActorHandler.ts";
 import { logConsole } from "./logger.ts"
 import * as Detectors from "./chatTypeDetectors/index.ts";
-import type { IActionDetails } from "./chatTypeDetectors/IActionDetector.ts";
+import type { IActionDetails, DetectedAction } from "./chatTypeDetectors/IActionDetector.ts";
 import { findCombatantByMessage, findCombatantById, findCombatantByTokenOrActor, getOpenApplications, isCurrentUserActiveGM, renderHandlebarsTemplate } from "./foundryCompat.ts";
 
 // Use a Template Literal Type for clarity, or just string
@@ -157,7 +157,7 @@ export class ChatManager {
         const data = this.runMessageDetectors(message);
         if (!data) return;
 
-        const isQuickenedEligible = ActorHandler.isActionQuickenedEligible(combatant, data.slug);
+        const isQuickenedEligible = data.isQuickenedEligible ?? ActorHandler.isActionQuickenedEligible(combatant, data.slug || "");
 
         // Check if we are updating an existing message or logging a new one
         const { ActionManager } = await import("./ActionManager.ts");
@@ -176,9 +176,10 @@ export class ChatManager {
 
         if (log) {
             const update: Partial<ActionLogEntry> = {
-                cost: data.cost,
+                cost: data.cost as any,
                 label: data.label,
                 isQuickenedEligible,
+                rank: data.rank,
                 ...mapMetadata
             };
             await ActionManager.editAction(combatant, message.id, update);
@@ -189,7 +190,7 @@ export class ChatManager {
 
             // 2. Add the action
             await ActionManager.addAction(combatant, {
-                cost: data.cost,
+                cost: data.cost as any,
                 msgId: message.id,
                 label: data.label,
                 type: type,
@@ -197,7 +198,8 @@ export class ChatManager {
                 isQuickenedEligible,
                 ...mapMetadata,
                 category: data.category,
-                linkedMessages: []
+                linkedMessages: [],
+                rank: data.rank
             });
         }
     }
@@ -467,15 +469,7 @@ export class ChatManager {
         }
     }
 
-    private static runMessageDetectors(message: any): {
-        cost: number,
-        slug: string,
-        label: string,
-        isReaction: boolean,
-        category: string,
-        isMapRelevant?: boolean,
-        mapProfile?: "standard" | "agile"
-    } | undefined {
+    private static runMessageDetectors(message: any): DetectedAction | undefined {
         const activeDetectors = [
             Detectors.HardIgnoreDetector,
             Detectors.SustainDetector,
@@ -507,7 +501,9 @@ export class ChatManager {
                     isReaction: details.isReaction,
                     category: Detector.type,
                     isMapRelevant: details.isMapRelevant,
-                    mapProfile: details.mapProfile
+                    mapProfile: details.mapProfile,
+                    rank: details.rank,
+                    isQuickenedEligible: details.isQuickenedEligible
                 };
             }
         }
