@@ -11,7 +11,7 @@
   "scripts": [],
   "description": "Automates tracking of the action economy for Starfinder 2e.",
   "manifest": "https://github.com/Knicklichtjedi/sf2-auto-action-tracker/releases/latest/download/module.json",
-  "download": "https://github.com/Knicklichtjedi/sf2-auto-action-tracker/releases/download/v0.19.2/sf2e-auto-action-tracker.zip",
+  "download": "https://github.com/Knicklichtjedi/sf2-auto-action-tracker/releases/download/v0.19.2/pf2e-auto-action-tracker.zip",
   "version": "0.19.2",
   "authors": [
     {
