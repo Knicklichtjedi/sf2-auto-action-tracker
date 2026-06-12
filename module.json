@@ -1,6 +1,6 @@
 {
-  "id": "pf2e-auto-action-tracker",
-  "title": "PF2E Automated Action Tracker",
+  "id": "sf2e-auto-action-tracker",
+  "title": "SF2E Automated Action Tracker",
   "socket": true,
   "esmodules": [
     "main.js"
@@ -9,10 +9,10 @@
     "style.css"
   ],
   "scripts": [],
-  "description": "Automates tracking of the action economy for Pathfinder 2e.",
-  "manifest": "https://github.com/soch0601/pf2e-auto-action-tracker/releases/latest/download/module.json",
-  "download": "https://github.com/soch0601/pf2e-auto-action-tracker/releases/download/v0.19.0/pf2e-auto-action-tracker.zip",
-  "version": "0.19.0",
+  "description": "Automates tracking of the action economy for Starfinder 2e.",
+  "manifest": "https://github.com/Knicklichtjedi/sf2e-auto-action-tracker/releases/latest/download/module.json",
+  "download": "https://github.com/Knicklichtjedi/sf2e-auto-action-tracker/releases/download/v0.19.1/sf2e-auto-action-tracker.zip",
+  "version": "0.19.1",
   "authors": [
     {
       "name": "Warder",
@@ -49,6 +49,14 @@
         "compatibility": {
           "minimum": "6.0.0",
           "verified": "8.1.1"
+        }
+      },
+      {
+        "id": "pf2e",
+        "manifest": "https://github.com/foundryvtt/pf2e/releases/download/sf2e-1.2.0/system.json",
+        "compatibility": {
+          "minimum": "1.2.0",
+          "verified": "1.2.0"
         }
       }
     ]
