@@ -52,7 +52,7 @@
         }
       },
       {
-        "id": "pf2e",
+        "id": "sf2e",
         "manifest": "https://github.com/foundryvtt/pf2e/releases/download/sf2e-1.2.0/system.json",
         "compatibility": {
           "minimum": "1.2.0",
