@@ -7,14 +7,13 @@ export class AttackDetector {
     static readonly type = "attack"
 
     static shouldBreak(message: any) {
-        // Break if it's just a damage roll for a strike (noise)
-        return !!message.flags?.pf2e?.context?.type?.includes('damage-roll');
+        const isDamage = (ctx: any) => ctx?.type === 'damage-roll';
+        return isDamage(message.flags?.pf2e?.context) || isDamage(message.flags?.sf2e?.context);
     }
-
+    
     static isType(message: any) {
-        const context = message.flags?.pf2e?.context;
-        // Catch Strikes, NPC Special Attacks, and Abilities
-        return context?.type === 'attack-roll' || !!context?.action;
+        const isAttackAction = (ctx: any) => ctx?.type === 'attack-roll' || !!ctx?.action;
+        return isAttackAction(message.flags?.pf2e?.context) || isAttackAction(message.flags?.sf2e?.context);
     }
 
     static getDetails(message: any): IActionDetails {
