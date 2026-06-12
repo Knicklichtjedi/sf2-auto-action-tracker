@@ -11,8 +11,8 @@
   "scripts": [],
   "description": "Automates tracking of the action economy for Starfinder 2e.",
   "manifest": "https://github.com/Knicklichtjedi/sf2-auto-action-tracker/releases/latest/download/module.json",
-  "download": "https://github.com/Knicklichtjedi/sf2-auto-action-tracker/releases/download/v0.19.1/pf2e-auto-action-tracker.zip",
-  "version": "0.19.1",
+  "download": "https://github.com/Knicklichtjedi/sf2-auto-action-tracker/releases/download/v0.19.2/sf2e-auto-action-tracker.zip",
+  "version": "0.19.2",
   "authors": [
     {
       "name": "Warder",
@@ -55,8 +55,8 @@
         "id": "sf2e",
         "manifest": "https://github.com/foundryvtt/pf2e/releases/download/sf2e-1.2.0/system.json",
         "compatibility": {
-          "minimum": "1.2.0",
-          "verified": "1.2.0"
+          "minimum": "0.0.11",
+          "verified": "0.0.11"
         }
       }
     ]
