@@ -56,7 +56,7 @@ jobs:
           jq --arg ver "$VER" --arg repo "$REPO" \
             '.version = $ver | 
              .manifest = "https://github.com/" + $repo + "/releases/latest/download/module.json" | 
-             .download = "https://github.com/" + $repo + "/releases/download/v" + $ver + "/sf2e-auto-action-tracker.zip"' \
+             .download = "https://github.com/" + $repo + "/releases/download/v" + $ver + "/pf2e-auto-action-tracker.zip"' \
              module.json > temp.json && mv temp.json module.json
           
           # Configure Git
@@ -75,10 +75,10 @@ jobs:
 
       - name: Create ZIP
         run: |
-          mkdir -p sf2e-auto-action-tracker
-          cp -r dist/* sf2e-auto-action-tracker/
-          cp module.json README.md sf2e-auto-action-tracker/
-          zip -r sf2e-auto-action-tracker.zip sf2e-auto-action-tracker/
+          mkdir -p pf2e-auto-action-tracker
+          cp -r dist/* pf2e-auto-action-tracker/
+          cp module.json README.md pf2e-auto-action-tracker/
+          zip -r pf2e-auto-action-tracker.zip pf2e-auto-action-tracker/
 
       # 2. Create GitHub Release
       - name: Create GitHub Release
@@ -89,6 +89,6 @@ jobs:
           body: ${{ steps.github_release.outputs.changelog }} # Uses the automated notes
           files: |
             module.json
-            sf2e-auto-action-tracker.zip
+            pf2e-auto-action-tracker.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
